@@ -1,7 +1,6 @@
 import React from 'react';
 import axios from 'axios'
 import ProfileCards from './ProfileCards'
-import Followers from './Followers'
 
 class User extends React.Component{
 
@@ -23,58 +22,76 @@ class User extends React.Component{
     axios
     .get(`https://api.github.com/users/${this.state.user}`)
     .then(response => {
-      console.log('userInfo', response.data)
+      // console.log('userInfo', response.data)
       this.setState({
         userInfo: response.data
       })
-    })
-    .catch(error => {
-      console.log('Error', error)
-    })
 
-    for(let i = 0; i < 5; i++){
-      // SET UP SECOND AXIOS TO GET FOLLOWER LOGIN RANDOMLY THEN USE ANOTHER AXIOS CALL TO GET THEIR INFORMATION
-      axios
-      .get(`https://api.github.com/users/${this.state.user}/followers`)
-      .then(response => {
-        // console.log('userFollowers', response.data)
-        let n = Math.floor(Math.random()*response.data.length-1)
-        this.setState({
-          // userFollowers: response.data[n].login,
-          followerArray: this.state.followerArray.concat(response.data[n].login)
+      for(let i = 0; i < 3; i++){
+        // SET UP SECOND AXIOS TO GET FOLLOWER LOGIN RANDOMLY THEN USE ANOTHER AXIOS CALL TO GET THEIR INFORMATION
+          // GET RID OF DUPLICATES AND -1
+        axios
+        .get(`https://api.github.com/users/${this.state.user}/followers`)
+        .then(response => {
+          // console.log('userFollowers', response.data)
+          let n = Math.floor(Math.abs(Math.random()*response.data.length-1))
+          this.setState({
+            // followerArray: [...this.state.followerArray, response.data[n].login]
+            ...this.state, followerArray:response.data[n].login
+          })
+
+          // this.state.followerArray.forEach(item => {
+            axios
+            .get(`https://api.github.com/users/${this.state.followerArray}`)
+            
+            .then(response => {
+              console.log('RESPONSE', response.data)
+              
+              this.setState({
+                followerInfo: response.data
+              })
+            })
+          // })
         })
-        
-      })
-      .catch(error => {
-        console.log('Error', error)
-      })
-    }
-    this.state.followerArray.forEach(item => {
-      axios
-      .get(`https://api.github.com/users/${item}`)
-      
-      .then(response => {
-        console.log('RESPONSE', response)
-        this.setState({
-          followerInfo: response.data.name
-        })
-      })
+      }
     })
-    
   }
-  
+
+  // componentDidUpdate(prevState){
+  //   if(this.state.user !== prevState.user){
+  //     axios
+  //       .get(`https://api.github.com/users/${this.state.user}`)
+  //       .then(response => {
+  //         this.setState({
+  //           userInfo: response.data
+  //         })
+  //       })
+  //       .catch(error => 
+  //         console.log('Search Error', error))
+  //   }
+  // }
+
+  handleChange = e => {
+    this.setState({
+      user: e.target.value
+    })
+  }
 
   // SEND USERINFO TO PROFILE CARDS AS PROPS
   render() {
-    console.log('followerArray', this.state.followerArray)
-    // console.log('RESPONSE', this.state.followerInfo)
+    console.log(this.state.followerArray)
     return(
       <div>
+        <input
+          type='text'
+          value={this.state.user}
+          onChange={this.handleChange}
+        />
+        <button onClick={this.newUser}>Find a User</button>
         <ProfileCards 
         info={this.state.userInfo} 
         followerInfo={this.state.followerInfo}
         />
-
       </div>
     )
   }
